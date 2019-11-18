@@ -442,17 +442,17 @@ export class Client {
      * @param fromRemotePath  Path of the remote file to read from.
      * @param startAt  Position within the remote file to start downloading at. If the destination is a file, this offset is also applied to it.
      */
-    async downloadTo(destination: Writable | string, fromRemotePath: string, startAt = 0) {
+    async downloadTo(destination: Writable | string, fromRemotePath: string, startAt = 0, rateLimit = 0) {
         if (typeof destination === "string") {
-            return this._downloadToFile(destination, fromRemotePath, startAt)
+            return this._downloadToFile(destination, fromRemotePath, startAt, rateLimit)
         }
-        return this._downloadToStream(destination, fromRemotePath, startAt)
+        return this._downloadToStream(destination, fromRemotePath, startAt, rateLimit)
     }
 
     /**
      * @protected
      */
-    protected async _downloadToFile(localPath: string, remotePath: string, startAt: number) {
+    protected async _downloadToFile(localPath: string, remotePath: string, startAt: number, rateLimit: number) {
         const appendingToLocalFile = startAt > 0
         const fileSystemFlags = appendingToLocalFile ? "r+" : "w"
         const fd = await fsOpen(localPath, fileSystemFlags)
@@ -462,7 +462,7 @@ export class Client {
             autoClose: false
         })
         try {
-            return await this._downloadToStream(destination, remotePath, startAt)
+            return await this._downloadToStream(destination, remotePath, startAt, rateLimit)
         }
         catch(err) {
             const localFileStats = await ignoreError(() => fsStat(localPath))
@@ -481,7 +481,7 @@ export class Client {
     /**
      * @protected
      */
-    protected async _downloadToStream(destination: Writable, remotePath: string, startAt: number): Promise<FTPResponse> {
+    protected async _downloadToStream(destination: Writable, remotePath: string, startAt: number, rateLimit: number): Promise<FTPResponse> {
         const onError = (err: Error) => this.ftp.closeWithError(err)
         destination.once("error", onError)
         try {
