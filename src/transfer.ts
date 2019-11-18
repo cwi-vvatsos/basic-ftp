@@ -5,6 +5,9 @@ import { TLSSocket, connect as connectTLS } from "tls"
 import { FTPContext, FTPResponse, TaskResolver } from "./FtpContext"
 import { ProgressTracker, ProgressType } from "./ProgressTracker"
 import { positiveIntermediate, positiveCompletion } from "./parseControlResponse"
+import { ThrottleGroup } from "stream-throttle"
+
+
 
 export type UploadCommand = "STOR" | "APPE"
 
@@ -227,7 +230,8 @@ export interface TransferConfig {
     remotePath: string
     type: ProgressType
     ftp: FTPContext
-    tracker: ProgressTracker
+    tracker: ProgressTracker,
+    rateLimit: Number
 }
 
 export function uploadFrom(source: Readable, config: TransferConfig): Promise<FTPResponse> {
@@ -271,7 +275,12 @@ export function downloadTo(destination: Writable, config: TransferConfig): Promi
     }
     // It's possible that data transmission begins before the control socket
     // receives the announcement. Start listening for data immediately.
-    config.ftp.dataSocket.pipe(destination)
+    if (config.rateLimit){
+        const throttle = new ThrottleGroup({rate: config.rateLimit});
+        config.ftp.dataSocket.pipe(throttle()).pipe(destination);
+    } else {
+        config.ftp.dataSocket.pipe(destination)
+    }
     const resolver = new TransferResolver(config.ftp, config.tracker)
     return config.ftp.handle(config.command, (res, task) => {
         if (res instanceof Error) {

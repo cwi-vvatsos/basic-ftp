@@ -494,7 +494,8 @@ export class Client {
                 tracker: this._progressTracker,
                 command: startAt > 0 ? `REST ${startAt}` : `RETR ${validPath}`,
                 remotePath: validPath,
-                type: "download"
+                type: "download",
+                rateLimit: rateLimit
             })
         }
         finally {

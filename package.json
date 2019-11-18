@@ -10,7 +10,7 @@
   "scripts": {
     "prepublishOnly": "npm run clean && npm run lint && tsc && mocha",
     "test": "npm run prepublishOnly",
-    "clean": "rimraf dist",
+    "clean": "del /q dist/*",
     "lint": "eslint \"./src/**/*.ts\"",
     "dev": "npm run clean && tsc --watch",
     "tdd": "mocha --watch",
