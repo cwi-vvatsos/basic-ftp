@@ -254,8 +254,8 @@ function downloadTo(destination, config) {
     // receives the announcement. Start listening for data immediately.
     if (config.rateLimit) {
         //throttle here
-        const throttle = new ThrottleGroup({rate: config.rateLimit});
-        config.ftp.dataSocket.pipe(throttle()).pipe(destination);
+        const throttleGroup = new ThrottleGroup({rate: config.rateLimit});
+        config.ftp.dataSocket.pipe(throttleGroup.throttle()).pipe(destination);
     }
     else {
         config.ftp.dataSocket.pipe(destination);
